@@ -1,12 +1,32 @@
 import { View, Text, StyleSheet, FlatList, Pressable, Image } from 'react-native';
 import { useState } from 'react';
 import { voices } from '../../data/voices';
+import { useFocusEffect } from 'expo-router';
 
-import { Audio } from 'expo-av';
-import { useRef, useEffect } from 'react';
+import { createAudioPlayer } from 'expo-audio';
+import { useRef, useEffect, useCallback } from 'react';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ChooseVoice() {
 	const [selectedVoice, setSelectedVoice] = useState(null);
+	const soundRef = useRef(null);
+
+	const playSound = async (soundFile) => {
+		try {
+			if (soundRef.current) {
+				soundRef.current.pause();
+				soundRef.current.remove();
+			}
+
+			const player = await createAudioPlayer(soundFile);
+			soundRef.current = player;
+
+			player.play();
+		} catch (error) {
+			console.error('Error playing sound:', error);
+		}
+	};
 
 	const renderVoiceItem = ({ item }) => {
 		const isSelected = selectedVoice === item.id;
@@ -14,8 +34,9 @@ export default function ChooseVoice() {
 		return (
 			<Pressable
 				style={[styles.VoiceItem, isSelected && styles.selectedVoice]}
-				onPress={() => {
+				onPress={async () => {
 					setSelectedVoice(item.id);
+					await AsyncStorage.setItem('selectedVoice', item.id);
 					playSound(item.sound);
 				}}
 			>
@@ -31,31 +52,42 @@ export default function ChooseVoice() {
 		)
 	};
 
-	const soundRef = useRef(null);
-
-	const playSound = async (soundFile) => {
-		try {
-			if (soundRef.current) {
-				await soundRef.current.stopAsync();
-				await soundRef.current.unloadAsync();
-			}
-
-			const { sound } = await Audio.Sound.createAsync(soundFile);
-			soundRef.current = sound;
-
-			await sound.playAsync();
-		} catch (error) {
-			console.error('Error playing sound:', error);
-		}
-	}
-
 	useEffect(() => {
+		const loadVoice = async () => {
+			try {
+				const savedVoice = await AsyncStorage.getItem('selectedVoice');
+				if (savedVoice) {
+					setSelectedVoice(savedVoice);
+				}
+			} catch (error) {
+				console.error('Error loading saved voice:', error);
+			}
+		}
+
+		loadVoice();
+
 		return () => {
 			if (soundRef.current) {
-				soundRef.current.unloadAsync();
+				soundRef.current.remove();
 			}
 		}
-	}, [])
+	}, []);
+
+	useFocusEffect(
+		useCallback(() => {
+			return () => {
+				if (soundRef.current) {
+					try {
+						soundRef.current.pause();
+						soundRef.current.remove();
+						soundRef.current = null;
+					} catch (error) {
+						console.error('Error stopping sound on blur:', error);
+					}
+				}
+			}
+		}, [])
+	)
 
 	return (
 		<View style={styles.container}>
