@@ -16,7 +16,7 @@ export default function AlarmRing() {
     const player = createAudioPlayer(voice.sound);
     playerRef.current = player;
     player.play();
-	player.setIsLooping(true);
+	// player.setIsLooping(true);
   };
 
   useEffect(() => {

@@ -3,14 +3,12 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import AlarmSetter from '../../components/AlarmSetter';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import * as Notifications from 'expo-notifications';
-
-import { setAudioModeAsync } from 'expo-audio';
-
+import { setAudioModeAsync, createAudioPlayer } from 'expo-audio';
 import { voices } from '../../data/voices';
 
 Notifications.setNotificationHandler({
@@ -72,21 +70,29 @@ export default function App() {
 	}, []);
 
 	useEffect(() => {
-		const sub = Notifications.addNotificationResponseReceivedListener(() => {
-			console.log("NOTIFICATION RECEIVED");
-			playSelectedVoice();
-			router.push('/alarm-ring');
-		});
-
-		return () => sub.remove();
-	}, []);
-
-	useEffect(() => {
 		setAudioModeAsync({
 			playsInSilentMode: true,
 			shouldDuck: false,
 		});
 	}, []);
+
+	const playSelectedVoice = async () => {
+		try {
+			const savedVoiceId = await AsyncStorage.getItem('selctedVoice');
+
+			const voice = voices.find(v => v.id === savedVoiceId);
+
+			if (!voice) return;
+
+			const player = createAudioPlayer(voice.sound);
+			playerRef.current = player;
+
+			await player.play();
+
+		} catch (error) {
+			console.error("Error playing selected voice:", error);
+		}
+  };
 
   return (
     <View style={styles.container}>
