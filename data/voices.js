@@ -23,4 +23,16 @@ export const voices = [
 	image: require('../assets/images/voice4.jpg'),
 	sound: require('../assets/sounds/voice4.mp3')
   },
+  { 
+	id: '5', 
+	name: 'Wise Mother',
+	image: require('../assets/images/voice5.png'),
+	sound: require('../assets/sounds/voice5.mp3')
+ },
+  { 
+	id: '6', 
+	name: 'Conquistador',
+	image: require('../assets/images/voice6.jpg'),
+	sound: require('../assets/sounds/voice6.mp3')
+  },
 ];

@@ -1,10 +1,10 @@
-import { View, Text, StyleSheet, FlatList, Pressable, Image } from 'react-native';
-import { useState } from 'react';
-import { voices } from '../../data/voices';
 import { useFocusEffect } from 'expo-router';
+import { useState } from 'react';
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { voices } from '../../data/voices';
 
 import { createAudioPlayer } from 'expo-audio';
-import { useRef, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
