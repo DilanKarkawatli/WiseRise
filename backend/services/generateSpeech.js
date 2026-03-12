@@ -1,14 +1,16 @@
 import { ElevenLabsClient } from "elevenlabs";
 import outputVoiceID from "./outputVoiceID.js";
 
+
 // const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const elevenlabs = new ElevenLabsClient({
 	apiKey: process.env.ELEVENLABS_API_KEY
 });
 
-export async function generateSpeech(text) {
+export async function generateSpeech(text, voiceKey) {
+	console.log("Generating speech with voiceKey:", voiceKey);
 
-	const voiceID = outputVoiceID("Wyatt");
+	const voiceID = outputVoiceID(voiceKey || "daniel"); // voiceKey or "daniel"
 
 	const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceID}/stream`, {
 			method: 'POST',
@@ -37,7 +39,6 @@ export async function generateSpeech(text) {
 	// Buffer is a Node.js class that represents binary data. 
 	// We can use it to store the audio data returned by the ElevenLabs API.
 	// */
-	const audioBuffer = Buffer.from(await response.arrayBuffer());
 
-	return audioBuffer;
+	return Buffer.from(await response.arrayBuffer());
 }

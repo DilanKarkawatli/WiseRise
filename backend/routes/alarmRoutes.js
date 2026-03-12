@@ -1,37 +1,61 @@
 import express from "express";
-
-// import { cleanText } from "../services/cleanText.js";
 import { generateMessage } from "../services/generateMessage.js";
 import { generatePrompt } from "../services/generatePrompt.js";
 import { generateSpeech } from "../services/generateSpeech.js";
+import { getSignedAudioUrl } from "../services/getSignedAudioUrl.js";
+import { listVoices } from "../services/outputVoiceID.js";
 import { uploadAudio } from "../services/uploadAudio.js";
 
 // Router instance to define routes related to alarms
 const router = express.Router();
 
+router.get("/voices", (req, res) => {
+	res.json({ voices: listVoices() });
+});
+
+router.get("/alarms/:fileKey/download-url", async (req, res) => {
+  try {
+    const { fileKey } = req.params;
+    const url = await getSignedAudioUrl(fileKey, 300); // 300/60 = 5 min
+    res.json({ download_url: url });
+  } catch (error) {
+    console.error("Signed URL error:", error);
+    res.status(500).json({ error: "Failed to create download URL" });
+  }
+});
+
 router.post("/generate-alarm", async (req, res) => {
-	const name = req.body.name;
-	const wakeTime = req.body.wakeTime;
+	try {
+		const { name, wakeTime, voiceKey } = req.body;
 
-	// Plan to add name and wakeTime from user input
-	const prompt = generatePrompt(name, wakeTime);
+		console.log("Received alarm generation request with:", { name, wakeTime, voiceKey });
 
-	// const cleanPrompt = cleanText(prompt);
+		// Plan to add name and wakeTime from user input
+		const prompt = generatePrompt(name, wakeTime);
+		const text = await generateMessage(prompt);
+		const audio = await generateSpeech(text, voiceKey);
 
-	const text = await generateMessage(prompt);
+		// const now = new Date();
+		// const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-	const audio = await generateSpeech(text);
+		const ts = new Date().toISOString().replace(/[:.]/g, '-');
+		const filename = `${voiceKey}-${name}-${ts}-alarm.mp3`;
+		// const filename = `${voiceKey}-${name}-${now.toISOString()}-alarm.mp3`;
+		// const url = await uploadAudio(audio, filename);
+		await uploadAudio(audio, filename);
 
-	const filename = `alarm-${Date.now()}.mp3`; // Later, add username/ID, date & voiceID
+		// res.json({ 
+		// 	audio_url: url,
+		// 	file_key: filename,
+		// });
+		res.json({ 
+			file_key: filename,
+		});
 
-	const url = await uploadAudio(audio, filename);
-
-	res.json({
-		audio_url: url
-	});
-
-	// res.setHeader("Content-Type", "audio/mpeg");
-	// res.send(audio);
+	} catch (error) {
+		console.error("Error generating alarm:", error);
+		res.status(500).json({ error: "Failed to generate alarm" });
+	}
 });
 
 export default router;

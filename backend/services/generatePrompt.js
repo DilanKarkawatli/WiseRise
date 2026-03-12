@@ -18,7 +18,7 @@ export function generatePrompt(name, wakeTime) {
 		- Optimistic
 		- Wise and assertive
 		- Not too nice, tough and brutal.
-		- Under 50 words
+		- Under 10 words
 
 		Remember, the main purpose is to get the user to wake up!
 

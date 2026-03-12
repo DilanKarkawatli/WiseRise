@@ -1,8 +1,7 @@
-import { View, Text, Pressable, NativeModules } from 'react-native';
-import { useEffect, useRef } from 'react';
-import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { voices } from '../../data/voices';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { useEffect, useRef } from 'react';
+import { NativeModules, Pressable, Text, View } from 'react-native';
 
 export default function AlarmRing() {
   const playerRef = useRef(null);
@@ -10,11 +9,14 @@ export default function AlarmRing() {
 
   const playVoice = async () => {
     await setAudioModeAsync({ playsInSilentMode: true, shouldDuck: false });
-    const id = await AsyncStorage.getItem('selectedVoice');
-    const voice = voices.find(v => v.id === id) ?? voices[0];
-    if (!voice) return;
+    // const id = await AsyncStorage.getItem('selectedVoice');
+    // const voice = voices.find(v => v.id === id) ?? voices[0];
+    // if (!voice) return;
 
-    const player = createAudioPlayer(voice.sound);
+    // const player = createAudioPlayer(voice.sound);
+	const localUri = await AsyncStorage.getItem('latestAlarmLocalUri');
+	const source = localUri ? { uri: localUri } : fallbackBundledSound;
+	const player = createAudioPlayer(source);
     playerRef.current = player;
     player.play();
   };

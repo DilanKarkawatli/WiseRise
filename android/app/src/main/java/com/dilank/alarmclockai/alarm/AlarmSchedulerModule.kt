@@ -18,6 +18,19 @@ class AlarmSchedulerModule(private val reactContext: ReactApplicationContext) : 
 
 	override fun getName(): String = "AlarmScheduler" // This name is used to reference the module from JavaScript
 
+	@ReactMethod
+	fun setAlarmSoundUri(uri: String?, promise: Promise) {
+	try {
+		reactContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+		.edit()
+		.putString(KEY_SOUND_URI, uri)
+		.apply()
+		promise.resolve(true)
+	} catch (exception: Exception) {
+		promise.reject("E_SET_ALARM_SOUND_URI", "Unable to store alarm sound uri", exception)
+		}
+	}
+
 	@ReactMethod // This method will be called from JavaScript to schedule an alarm
 	fun scheduleAlarm(triggerAtMillis: Double, promise: Promise) {
 		try {
@@ -98,6 +111,7 @@ class AlarmSchedulerModule(private val reactContext: ReactApplicationContext) : 
 		const val KEY_TRIGGER_AT_MILLIS = "trigger_at_millis"
 		const val KEY_REQUEST_CODE = "request_code"
 		const val DEFAULT_REQUEST_CODE = 4040
+		const val KEY_SOUND_URI = "sound_uri"
 
 		fun scheduleAlarmInternal(context: Context, triggerAtMillis: Long, requestCode: Int) {
 			val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager

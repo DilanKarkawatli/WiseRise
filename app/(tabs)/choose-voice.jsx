@@ -36,7 +36,9 @@ export default function ChooseVoice() {
 				style={[styles.VoiceItem, isSelected && styles.selectedVoice]}
 				onPress={async () => {
 					setSelectedVoice(item.id);
-					await AsyncStorage.setItem('selectedVoice', item.id);
+					await AsyncStorage.setItem('selectedVoice', item.voiceKey);
+					await AsyncStorage.setItem('selectedId', item.id);
+					console.log('Selected voice:', item.voiceKey);
 					playSound(item.sound);
 				}}
 			>
@@ -56,8 +58,10 @@ export default function ChooseVoice() {
 		const loadVoice = async () => {
 			try {
 				const savedVoice = await AsyncStorage.getItem('selectedVoice');
-				if (savedVoice) {
-					setSelectedVoice(savedVoice);
+				const savedId = await AsyncStorage.getItem('selectedId');
+				if (savedId) {
+					setSelectedVoice(savedId);
+					console.log('Loaded saved voice:', savedVoice);
 				}
 			} catch (error) {
 				console.error('Error loading saved voice:', error);

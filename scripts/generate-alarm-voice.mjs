@@ -1,8 +1,8 @@
+import 'dotenv/config';
+import { execSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { buildPrompt } from './promptBuilder.js';
-import 'dotenv/config';
-import { execSync } from 'node:child_process';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
@@ -152,6 +152,7 @@ async function main() {
 	const sentences = splitIntoSentences(cleanedFullText);
 	console.log("Split into sentences: ", sentences);
 
+	//-----
 	const audioFiles = [];
 
 	for (let i = 0; i < sentences.length; i++) {

@@ -42,23 +42,52 @@ class AlarmSoundService : Service() {
 
   override fun onBind(intent: Intent?): IBinder? = null
 
-  private fun startAlarmIfNeeded() {
-    if (mediaPlayer != null) return
+//   private fun startAlarmIfNeeded() {
+//     if (mediaPlayer != null) return
 
-    val soundUri = Uri.parse("android.resource://$packageName/${R.raw.alarm_voice}")
-    mediaPlayer = MediaPlayer().apply {
-      setAudioAttributes(
-        AudioAttributes.Builder()
-          .setUsage(AudioAttributes.USAGE_ALARM)
-          .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-          .build()
-      )
-      setDataSource(applicationContext, soundUri)
-      isLooping = true
-      prepare()
-      start()
-    }
-  }
+//     val soundUri = Uri.parse("android.resource://$packageName/${R.raw.alarm_voice}")
+//     mediaPlayer = MediaPlayer().apply {
+//       setAudioAttributes(
+//         AudioAttributes.Builder()
+//           .setUsage(AudioAttributes.USAGE_ALARM)
+//           .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+//           .build()
+//       )
+//       setDataSource(applicationContext, soundUri)
+//       isLooping = true
+//       prepare()
+//       start()
+//     }
+//   }
+  private fun startAlarmIfNeeded() {
+	if (mediaPlayer != null) return
+
+	val prefs = getSharedPreferences(AlarmSchedulerModule.PREFS_NAME, Context.MODE_PRIVATE)
+	val customUri = prefs.getString(AlarmSchedulerModule.KEY_SOUND_URI, null)
+
+	android.util.Log.d("AlarmSoundService", "customUri=$customUri")
+
+	val soundUri = if (!customUri.isNullOrBlank()) {
+		Uri.parse(customUri)
+	} else {
+		Uri.parse("android.resource://$packageName/${R.raw.alarm_voice}")
+	}
+
+	android.util.Log.d("AlarmSoundService", "customUri=$customUri")
+
+	mediaPlayer = MediaPlayer().apply {
+		setAudioAttributes(
+		AudioAttributes.Builder()
+			.setUsage(AudioAttributes.USAGE_ALARM)
+			.setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+			.build()
+		)
+		setDataSource(applicationContext, soundUri)
+		isLooping = true
+		prepare()
+		start()
+	}
+	}
 
   private fun stopAlarm() {
     mediaPlayer?.stop()

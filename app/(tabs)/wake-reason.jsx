@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, TextInput, Pressable } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { profileTemplate } from '../../data/profileTemplate';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,7 +27,6 @@ export default function WakeReason() {
 			)
 
 			// console.log('Profile saved:', profile);
-			wakereason = profile.wakeReason;	
 			setSavedGoal(profile.wakeReason);
 		} catch (error) {
 			console.error('Error saving profile:', error);
