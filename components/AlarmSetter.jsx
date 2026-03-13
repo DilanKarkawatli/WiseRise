@@ -2,20 +2,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Notifications from 'expo-notifications';
 import { useState } from 'react';
-import { NativeModules, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-
+import { NativeModules, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 const { AlarmScheduler } = NativeModules;
 
-
-// import { createAudioPlayer } from 'expo-audio';
-// import { voices } from '../data/voices';
+import DatePicker from "react-native-date-picker";
 
 export default function AlarmSetter({ onAlarmChange, onClose }) {
   const [time, setTime] = useState('');
   const [alarmInfo, setAlarmInfo] = useState(null);
 
-//   const timeoutRef = useRef(null);
-//   const playerRef = useRef(null);
+  const [date, setDate] = useState(new Date());
+  const [open, setOpen] = useState(false);
 
   const scheduleExpoAlarm = async (alarmTime) => {
 	const id = await Notifications.scheduleNotificationAsync({
@@ -35,31 +32,16 @@ export default function AlarmSetter({ onAlarmChange, onClose }) {
 	await AsyncStorage.setItem('alarmNotificationId', id);
   }
 
-//   const playSelectedVoice = async () => {
-//     try {
-//       const savedVoiceId = await AsyncStorage.getItem('selectedVoice');
-
-//       const voice = voices.find(v => v.id === savedVoiceId);
-
-//       if (!voice) {
-//         console.log('No voice selected');
-//         return;
-//       }
-
-//       const player = createAudioPlayer(voice.sound);
-//       playerRef.current = player;
-
-//       player.play();
-//     } catch (error) {
-//       console.log('Error playing alarm:', error);
-//     }
-//   };
-
   async function generateAlarmAudio(alarmDate) {
 	const voiceKey = (await AsyncStorage.getItem('selectedVoice')) || 'daniel';
 	const name = 'Dilan';
 	const wakeTime = alarmDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-	const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+
+	const baseUrl = process.env.EXPO_PUBLIC_API_URL;
+
+	if (!baseUrl) {
+		throw new Error('API base URL not working');
+	}
 
 	const response = await fetch(`${baseUrl}/generate-alarm`, {
 		method: 'POST',
@@ -94,17 +76,16 @@ export default function AlarmSetter({ onAlarmChange, onClose }) {
   }
 
   const setAlarm = async () => {
-    if (!time.includes(':')) return;
+    // if (!time.includes(':')) return;
 
-	// if (timeoutRef.current) {
-	// 	clearTimeout(timeoutRef.current)
-	// }
+	const hours = date.getHours();
+	const minutes = date.getMinutes();
 
-    const [hours, minutes] = time.split(':').map(Number);
 	if (Number.isNaN(hours) || Number.isNaN(minutes)) return;
 
     const now = new Date();
     const alarm = new Date();
+
     alarm.setHours(hours);
 	alarm.setMinutes(minutes);
     alarm.setSeconds(0);
@@ -114,24 +95,6 @@ export default function AlarmSetter({ onAlarmChange, onClose }) {
     if (alarm <= now) {
       alarm.setDate(alarm.getDate() + 1);
     }
-
-	// if (Platform.OS === 'android' && AlarmScheduler) {
-	// 	const canExact = await AlarmScheduler.canScheduleExactAlarms();
-	// 	console.log('canExact', canExact);
-	// 	if (!canExact) {
-	// 		Alert.alert(
-	// 			'Allow exact alarms',
-	// 			'Please allow exact alarms so your alarm can fire on time after reboot/sleep.'
-	// 		);
-	// 		AlarmScheduler.openExactAlarmSettings();
-	// 		return;
-	// 	}
-	// 	await AlarmScheduler.scheduleAlarm(alarm.getTime());
-	// } else {
-	// 	await scheduleExpoAlarm(alarm);
-	// }
-
-	// await scheduleAlarm(alarm);
 
 	await AsyncStorage.setItem('wakeTime', alarm.toISOString());
 
@@ -179,13 +142,27 @@ export default function AlarmSetter({ onAlarmChange, onClose }) {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder=" '7:30' "
-        value={time}
-        onChangeText={setTime}
-      />
-
+		<Pressable
+			style={styles.input}
+			onPress={() => setOpen(true)}
+			>
+			<Text style={{ fontSize: 18 }}>
+				{date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+			</Text>
+		</Pressable>
+		<DatePicker
+			modal
+			open={open}
+			date={date}
+			mode="time"
+			onConfirm={(selectedDate) => {
+				setOpen(false);
+				setDate(selectedDate);
+			}}
+			onCancel={() => {
+				setOpen(false);
+			}}
+		/>
       <Pressable style={styles.button} onPress={setAlarm}>
         <Text style={styles.buttonText}>Set Alarm</Text>
       </Pressable>
@@ -211,15 +188,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
   },
-  input: {
-    backgroundColor: '#e0e0e0',
-    padding: 15,
-    borderRadius: 10,
-    width: '100%',
-    fontSize: 18,
-    marginBottom: 15,
-    textAlign: 'center',
-  },
   button: {
     backgroundColor: '#757575',
     padding: 12,
@@ -244,4 +212,12 @@ const styles = StyleSheet.create({
     marginTop: 15,
     fontSize: 16,
   },
+	input: {
+	backgroundColor: "#d9d9d9",
+	padding: 18,
+	borderRadius: 12,
+	width: "100%",
+	alignItems: "center",
+	marginBottom: 15,
+	},
 });

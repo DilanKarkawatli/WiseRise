@@ -3,6 +3,8 @@ import express from "express";
 import alarmRoutes from "./routes/alarmRoutes.js";
 dotenv.config();
 
+const PORT = process.env.PORT || 3000;
+
 // Create an instance of the Express application
 const app = express();
 
@@ -12,10 +14,10 @@ app.use(express.json());
 app.use("/", alarmRoutes);
 
 app.get("/", (req, res) => {
-	res.send("Server running");
+	res.send("API running");
 });
 
 // Start the server and listen on port 3000
-app.listen(3000, () => {
-	  console.log("Server is running on port 3000");
+app.listen(PORT, () => {
+	  console.log(`Server is running on port ${PORT}`);
 });

@@ -1,14 +1,13 @@
-import { View, Text, Image, StyleSheet, Pressable, Modal, Platform } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { Image, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import AlarmSetter from '../../components/AlarmSetter';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
-import DateTimePicker from '@react-native-community/datetimepicker';
 
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import * as Notifications from 'expo-notifications';
-import { setAudioModeAsync, createAudioPlayer } from 'expo-audio';
 import { voices } from '../../data/voices';
 
 Notifications.setNotificationHandler({
