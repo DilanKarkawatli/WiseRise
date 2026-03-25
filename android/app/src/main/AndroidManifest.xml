@@ -36,7 +36,6 @@
         <data android:scheme="exp+alarm-clock-ai"/>
       </intent-filter>
     </activity>
-<<<<<<< HEAD
     <receiver android:name=".alarm.AlarmReceiver" android:enabled="true" android:exported="false"/>
     <service android:name=".alarm.AlarmSoundService" android:enabled="true" android:exported="false" android:foregroundServiceType="mediaPlayback"/>
     <receiver android:name=".alarm.BootReceiver" android:enabled="true" android:exported="false">
@@ -46,7 +45,5 @@
         <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
       </intent-filter>
     </receiver>
-=======
->>>>>>> 59daf825947941c4d34ebff014e50dd145f9d68d
   </application>
 </manifest>

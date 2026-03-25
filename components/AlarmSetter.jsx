@@ -121,11 +121,8 @@ export default function AlarmSetter({ onAlarmChange, onClose }) {
   }
 
   const setAlarm = async () => {
-<<<<<<< HEAD
 	const allowed = await ensureAlarmPermissions();
 	if (!allowed) return;
-=======
->>>>>>> 59daf825947941c4d34ebff014e50dd145f9d68d
 
 	// ####### TIME LOGIC #######
 	const hours = date.getHours();
