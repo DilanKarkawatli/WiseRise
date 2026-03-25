@@ -8,8 +8,6 @@ export default function WakeReason() {
 	const [profile, setProfile] = useState(profileTemplate)
 	const [savedGoal, setSavedGoal] = useState("");
 
-
-
 	const handleChange = (text) => {
 		setProfile(prev => ({
 			...prev,
@@ -17,45 +15,44 @@ export default function WakeReason() {
 		}))
 	}
 
-
-
 	const saveProfile = async () => {
 		try {
-			await AsyncStorage.setItem(
-				'userProfile',
-				JSON.stringify(profile)
-			)
+			const userDataRaw = await AsyncStorage.getItem('user_data');
+			const userData = userDataRaw ? JSON.parse(userDataRaw) : {};
 
-			// console.log('Profile saved:', profile);
-			setSavedGoal(profile.wakeReason);
+			const updatedProfile = {
+				...userData,
+				goal: profile.wakeReason,
+			}
+			
+			await AsyncStorage.setItem('user_data', JSON.stringify(updatedProfile));
+			setSavedGoal(updatedProfile.goal || '');
+			console.log('Profile saved successfully:', updatedProfile);
 		} catch (error) {
 			console.error('Error saving profile:', error);
 		}
 	}
 
-
-
-
 	useEffect(() => {
 		const loadProfile = async () => {
 			try {
-				const savedProfile = await AsyncStorage.getItem('userProfile');
+				const saved = await AsyncStorage.getItem('user_data');
+				if (!saved) return;
 
-				if (savedProfile) {
-					const parsed = JSON.parse(savedProfile)
-					setProfile(parsed);
-					setSavedGoal(parsed.wakeReason);
-				}
-			} catch (error) {
+				const parsed = JSON.parse(saved)
+				const goalText = parsed.goal || '';
+
+				setProfile(prev => ({
+					...prev,
+					wakeReason : goalText || ''}));
+				setSavedGoal(goalText || '');
+				} catch (error) {
 				console.error('Error loading saved voice:', error);
 			}
 		}
 
 		loadProfile();
 	}, []);
-
-
-
 
 	return (
 		<View style={styles.container}>

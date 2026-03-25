@@ -3,6 +3,20 @@
 # dependencies
 node_modules/
 
+# Android build outputs
+android/app/build/
+android/build/
+android/.gradle/
+
+# Backend (not needed for mobile build)
+backend/node_modules/
+
+# Development copy
+development/
+
+# Temp files
+temp_audio/
+
 # Expo
 .expo/
 dist/

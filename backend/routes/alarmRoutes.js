@@ -26,12 +26,12 @@ router.get("/alarms/:fileKey/download-url", async (req, res) => {
 
 router.post("/generate-alarm", async (req, res) => {
 	try {
-		const { name, wakeTime, voiceKey } = req.body;
+		const { name, wakeTime, voiceKey, wakeReason} = req.body;
 
 		console.log("Received alarm generation request with:", { name, wakeTime, voiceKey });
 
 		// Plan to add name and wakeTime from user input
-		const prompt = generatePrompt(name, wakeTime);
+		const prompt = generatePrompt(name, wakeTime, wakeReason);
 		const text = await generateMessage(prompt);
 		const audio = await generateSpeech(text, voiceKey);
 

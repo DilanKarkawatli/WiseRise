@@ -2,6 +2,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
 dotenv.config();
 
+// ##### Static Storage Config #####
 export const s3 = new S3Client({
 	region: "auto",
 	endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,

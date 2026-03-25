@@ -10,6 +10,8 @@ import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import * as Notifications from 'expo-notifications';
 import { voices } from '../../data/voices';
 
+import Onboarding from '../../components/Onboarding';
+
 Notifications.setNotificationHandler({
 	handleNotification: async () => ({
 		shouldShowList: true,
@@ -24,6 +26,33 @@ export default function App() {
 	const router = useRouter();
 	const [timerVisible, setTimerVisible] = useState(false);
 
+	const [showOnboarding, setShowOnboarding] = useState(false);
+	const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+
+	useEffect(() => {
+	(async () => {
+		const done = await AsyncStorage.getItem('user_data');
+		setShowOnboarding(!done);
+		setCheckingOnboarding(false);
+	})();
+	}, []);
+
+	const handleOnboardingSubmit = async ({ name, email, goal }) =>  {
+		// await AsyncStorage.setItem('user_data', 'true');
+		await AsyncStorage.setItem('user_data', JSON.stringify({ name, email, goal }));
+
+		setShowOnboarding(false);
+	}
+
+	const resetOnboarding = async () => {
+		try {
+			await AsyncStorage.removeItem('user_data');
+			console.log('Onboarding reset successfully');
+		} catch (error) {
+			console.error("Failed to reset onboarding:", error);
+		}
+	};
+
 	const loadWakeTime = async () => {
 		const saved = await AsyncStorage.getItem('wakeTime');
 
@@ -33,6 +62,7 @@ export default function App() {
 			const formatted = date.toLocaleTimeString([], {
 					hour: '2-digit',
 					minute: '2-digit',
+					hour12: false,
 				})
 
 			setWakeTime(formatted);
@@ -77,7 +107,7 @@ export default function App() {
 
 	const playSelectedVoice = async () => {
 		try {
-			const savedVoiceId = await AsyncStorage.getItem('selctedVoice');
+			const savedVoiceId = await AsyncStorage.getItem('selectedVoice');
 
 			const voice = voices.find(v => v.id === savedVoiceId);
 
@@ -95,21 +125,27 @@ export default function App() {
 
   return (
     <View style={styles.container}>
+		<Onboarding
+			visible={!checkingOnboarding && showOnboarding}
+			onSubmit={handleOnboardingSubmit}
+		/>
 
-      <Text style={styles.text}>Know why to wake up</Text>
+      {/* <Text style={styles.text}>Know why to wake up</Text> */}
 
 	  {wakeTime && (
 		<Text style={styles.wakeTimeText}>
 			{wakeTime}
 		</Text>
 	  )}
-
+	  
 	  <Pressable onLongPress={() => setTimerVisible(true)}>
 		<Image 
 			style={styles.image} 
 			source={require('../../assets/images/clock-icon-1.png')}
 		/>
 	  </Pressable>
+
+	  <Text style={styles.holdText}> Hold to set time </Text>
 
 	  <Pressable
 	  	style={styles.buttonVoice}
@@ -123,6 +159,10 @@ export default function App() {
 		<Text style={styles.buttonTextWakeUp}>your why</Text>
 	  </Pressable>
 
+	  <Pressable style={styles.button} onPress={resetOnboarding}>
+		<Text style={styles.buttonText}>Reset Onboarding (Dev)</Text>
+	  </Pressable>
+
 	  <Modal
 	  	visible={timerVisible}
 		animationType="fade"
@@ -133,23 +173,10 @@ export default function App() {
 		<View style={styles.modalOverlay}>
 			<View style={styles.modalContent}>
 				<Text style={styles.modalTitle}>Alarm Clock</Text>
-
-				{/* Timer UI */}
-				{/* <Text> Alarm Clock coming soon...</Text> */}
 				<AlarmSetter 
 					onAlarmChange={loadWakeTime}
 					onClose={() => setTimerVisible(false)}
 				/>
-
-				{/* <Pressable
-					style={styles.closeButton}
-					onPress={() => {
-						setTimerVisible(false);
-						loadWakeTime(); // refresh wake time after setting alarm
-					}}
-				>
-					<Text style={styles.closeButtonText}>Done</Text>
-				</Pressable> */}
 			</View>
 		</View>
 	  </Modal>
@@ -162,20 +189,19 @@ const styles = StyleSheet.create({
 		flex: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
-		paddingHorizontal: 20,
-		paddingTop: 50,
+		paddingHorizontal: 40,
 	},
 	image: {
 		width: 300,
 		height: 300,
-		marginTop: 30,
-		marginBottom: 50,
+		marginTop: 10,
+		marginBottom: 10,
 		borderRadius: 100,
 	},
 	text: {
 		fontSize: 24,
 		fontWeight: 'bold',
-		marginBottom: 30,
+		marginBottom: 10,
 		fontStyle: 'italic',
 		textAlign: 'center',
 	},
@@ -234,11 +260,18 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	wakeTimeText: {
-		fontSize: 84,
+		fontSize: 80,
 		fontWeight: 'bold',
 		color: '#8d8d8d',
 		textShadowColor: 'rgba(99, 99, 99, 0.5)',
-		textShadowOffset: { width: 0, height: 4 },
-		textShadowRadius: 10,
+		textShadowOffset: { width: 4, height: 4 },
+		textShadowRadius: 20,
+		marginBottom: 20,
 	},
+	holdText: {
+		fontSize: 14,
+		fontWeight: 'italic',
+		color: '#8d8d8d',
+		marginBottom: 70,
+	}
 })

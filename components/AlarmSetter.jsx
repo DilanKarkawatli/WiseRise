@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Notifications from 'expo-notifications';
 import { useState } from 'react';
-import { NativeModules, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, NativeModules, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 const { AlarmScheduler } = NativeModules;
 
 import DatePicker from "react-native-date-picker";
@@ -32,9 +32,54 @@ export default function AlarmSetter({ onAlarmChange, onClose }) {
 	await AsyncStorage.setItem('alarmNotificationId', id);
   }
 
+  const ensureAlarmPermissions = async () => {
+	if (Platform.OS === 'android') return true; // Handled by native module
+	
+	const notif = await Notifications.requestPermissionsAsync()
+	const notifGranted = notif.granted || notif.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
+
+	if (!notifGranted) {
+		Alert.alert("Notifcations required", "Enable notifcations so alarms can fire in prod. builds.");
+		return false;
+	}
+
+	if (AlarmScheduler?.canScheduleExactAlarms) {
+		const canExact = await AlarmScheduler.canScheduleExactAlarms();
+	if (!canExact) {
+		Alert.alert(
+			'Exact alarms required',
+			'Please allow exact alarms for this app in system settings.',
+			[
+			{ text: 'Cancel', style: 'cancel' },
+			{
+				text: 'Open settings',
+				onPress: () => AlarmScheduler?.openExactAlarmSettings?.(),
+			},
+			]
+		);
+		return false;
+		}
+	}
+
+	return true;
+  }
+
   async function generateAlarmAudio(alarmDate) {
 	const voiceKey = (await AsyncStorage.getItem('selectedVoice')) || 'daniel';
-	const name = 'Dilan';
+
+	// Grabs the name, email & goal data from onBoarding.jsx
+	const onboardingRaw = await AsyncStorage.getItem('user_data');
+	const onboarding = onboardingRaw ? JSON.parse(onboardingRaw) : {};
+
+	// Grabs the goal data from wake-reason.jsx
+	const profileRaw = await AsyncStorage.getItem('userProfile');
+	const profile = profileRaw ? JSON.parse(profileRaw) : {};
+
+	const name = onboarding.name || 'friend';
+	const wakeReason = onboarding.goal || 'No goal provided';
+
+	// const name = 'Dilan';
+
 	const wakeTime = alarmDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 	const baseUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -46,7 +91,7 @@ export default function AlarmSetter({ onAlarmChange, onClose }) {
 	const response = await fetch(`${baseUrl}/generate-alarm`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ name, wakeTime, voiceKey }),
+		body: JSON.stringify({ name, wakeTime, voiceKey, wakeReason }),
 	});
 
 	const data = await response.json();
@@ -76,8 +121,10 @@ export default function AlarmSetter({ onAlarmChange, onClose }) {
   }
 
   const setAlarm = async () => {
-    // if (!time.includes(':')) return;
+	const allowed = await ensureAlarmPermissions();
+	if (!allowed) return;
 
+	// ####### TIME LOGIC #######
 	const hours = date.getHours();
 	const minutes = date.getMinutes();
 
@@ -96,12 +143,8 @@ export default function AlarmSetter({ onAlarmChange, onClose }) {
       alarm.setDate(alarm.getDate() + 1);
     }
 
+	// ####### SCHEDULING #######
 	await AsyncStorage.setItem('wakeTime', alarm.toISOString());
-
-	await generateAlarmAudio(alarm);
-
-	console.log('Alarm set for', alarm.toISOString());
-	console.log('Alarm audio URL stored:', await AsyncStorage.getItem("latestAlarmRemoteUrl"));
 
 	// schedule only once, after URI is saved
 	if (Platform.OS === 'android' && AlarmScheduler) {
@@ -110,16 +153,19 @@ export default function AlarmSetter({ onAlarmChange, onClose }) {
 	await scheduleExpoAlarm(alarm);
 	}
 
-	// await AlarmScheduler.scheduleAlarm(alarm.getTime());
-
+	// ####### UI REFRESHES #######
 	const formatted = alarm.toLocaleTimeString([], {
 		hour: '2-digit',
 		minute: '2-digit',
 	})
-
 	setAlarmInfo(formatted)
 	onAlarmChange?.(); // notify parent to refresh wake time display
 	onClose?.();
+
+	// ####### Generate Audio Process #######
+	await generateAlarmAudio(alarm); // Time intensive
+	console.log('Alarm set for', alarm.toISOString());
+	console.log('Alarm audio URL stored:', await AsyncStorage.getItem("latestAlarmRemoteUrl"));
   };
 
   const cancelAlarm = async () => {

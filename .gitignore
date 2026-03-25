@@ -14,6 +14,8 @@ ServiceAccountWiseRise.json
 app/(tabs)/x_layout.tsx
 app/explore.tsx
 
+deployment_instructions.txt
+
 # Native
 .kotlin/
 *.orig.*
@@ -57,3 +59,5 @@ app-example
 /raw
 
 /app/generated/prisma
+
+/backend/local_test

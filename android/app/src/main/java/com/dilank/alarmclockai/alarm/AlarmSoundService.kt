@@ -12,12 +12,14 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.dilank.alarmclockai.MainActivity
 import com.dilank.alarmclockai.R
 
 class AlarmSoundService : Service() {
   private var mediaPlayer: MediaPlayer? = null
+  private val logTag = "AlarmSoundService"
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     val action = intent?.action ?: ACTION_START
@@ -42,52 +44,51 @@ class AlarmSoundService : Service() {
 
   override fun onBind(intent: Intent?): IBinder? = null
 
-//   private fun startAlarmIfNeeded() {
-//     if (mediaPlayer != null) return
-
-//     val soundUri = Uri.parse("android.resource://$packageName/${R.raw.alarm_voice}")
-//     mediaPlayer = MediaPlayer().apply {
-//       setAudioAttributes(
-//         AudioAttributes.Builder()
-//           .setUsage(AudioAttributes.USAGE_ALARM)
-//           .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-//           .build()
-//       )
-//       setDataSource(applicationContext, soundUri)
-//       isLooping = true
-//       prepare()
-//       start()
-//     }
-//   }
   private fun startAlarmIfNeeded() {
-	if (mediaPlayer != null) return
+    if (mediaPlayer != null) return
 
-	val prefs = getSharedPreferences(AlarmSchedulerModule.PREFS_NAME, Context.MODE_PRIVATE)
-	val customUri = prefs.getString(AlarmSchedulerModule.KEY_SOUND_URI, null)
+    val prefs = getSharedPreferences(AlarmSchedulerModule.PREFS_NAME, Context.MODE_PRIVATE)
+    val customUri = prefs.getString(AlarmSchedulerModule.KEY_SOUND_URI, null)
 
-	android.util.Log.d("AlarmSoundService", "customUri=$customUri")
+    val fallbackUri = Uri.parse("android.resource://$packageName/${R.raw.alarm_voice}")
+    val customParsedUri = customUri?.takeIf { it.isNotBlank() }?.let { Uri.parse(it) }
 
-	val soundUri = if (!customUri.isNullOrBlank()) {
-		Uri.parse(customUri)
-	} else {
-		Uri.parse("android.resource://$packageName/${R.raw.alarm_voice}")
-	}
+    if (customParsedUri != null) {
+      Log.d(logTag, "Trying custom alarm URI: $customParsedUri")
+      if (tryStartPlayer(customParsedUri)) return
+      Log.w(logTag, "Custom alarm URI failed, falling back to bundled alarm sound")
+    }
 
-	android.util.Log.d("AlarmSoundService", "customUri=$customUri")
+    if (!tryStartPlayer(fallbackUri)) {
+      Log.e(logTag, "Failed to start alarm playback with both custom and fallback URI")
+      stopForeground(STOP_FOREGROUND_REMOVE)
+      stopSelf()
+    }
+  }
 
-	mediaPlayer = MediaPlayer().apply {
-		setAudioAttributes(
-		AudioAttributes.Builder()
-			.setUsage(AudioAttributes.USAGE_ALARM)
-			.setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-			.build()
-		)
-		setDataSource(applicationContext, soundUri)
-		isLooping = true
-		prepare()
-		start()
-	}
-	}
+  private fun tryStartPlayer(soundUri: Uri): Boolean {
+    return try {
+      val player = MediaPlayer().apply {
+        setAudioAttributes(
+          AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        )
+        setDataSource(applicationContext, soundUri)
+        isLooping = true
+        prepare()
+        start()
+      }
+      mediaPlayer = player
+      true
+    } catch (exception: Exception) {
+      Log.e(logTag, "Unable to start alarm audio for URI: $soundUri", exception)
+      mediaPlayer?.release()
+      mediaPlayer = null
+      false
+    }
+  }
 
   private fun stopAlarm() {
     mediaPlayer?.stop()
