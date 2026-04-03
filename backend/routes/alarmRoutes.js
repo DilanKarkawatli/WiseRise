@@ -25,14 +25,18 @@ router.get("/alarms/:fileKey/download-url", async (req, res) => {
 });
 
 router.post("/generate-alarm", async (req, res) => {
+	console.log("BODY TEST: ");
 	try {
+		console.log("Pre-test")
 		const { name, wakeTime, voiceKey, wakeReason} = req.body;
 
-		console.log("Received alarm generation request with:", { name, wakeTime, voiceKey });
+		console.log(req.body);
+
+		console.log("Received alarm generation request with:", { name, wakeTime, voiceKey, wakeReason });
 
 		// Plan to add name and wakeTime from user input
 		const prompt = generatePrompt(name, wakeTime, wakeReason);
-		const text = await generateMessage(prompt);
+		const text = await generateMessage(prompt);	
 		const audio = await generateSpeech(text, voiceKey);
 
 		const ts = new Date().toISOString().replace(/[:.]/g, '-');
@@ -44,7 +48,9 @@ router.post("/generate-alarm", async (req, res) => {
 		});
 
 	} catch (error) {
+		const { name, wakeTime, wakeReason, voiceKey } = req.body;
 		console.error("Error generating alarm:", error);
+		console.error("Parameters received:", { name, wakeTime, wakeReason, voiceKey });
 		res.status(500).json({ error: "Failed to generate alarm" });
 	}
 });

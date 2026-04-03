@@ -11,8 +11,11 @@ export async function generateMessage(prompt) {
 				role: "user",
 				content: prompt
 			}
-		]
+		],
+		"max_tokens": 25
 	});
+
+	console.log("Message: ", completion)
 
 	return completion.choices[0].message.content;
 }

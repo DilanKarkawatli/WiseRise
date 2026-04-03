@@ -19,7 +19,7 @@ export async function generateSpeech(text, voiceKey) {
 				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({
-				model_id: 'eleven_multilingual_v2',
+				model_id: 'eleven_flash_v2_5', // eleven_multilingual_v2
 				Accept: 'audio/mpeg',
 				voice_settings: {
 					stability: 0.8,

@@ -33,7 +33,7 @@ class AlarmSoundService : Service() {
 
     createChannelIfNeeded()
     startForeground(NOTIFICATION_ID, buildForegroundNotification())
-    startAlarmIfNeeded()
+    // startAlarmIfNeeded()
     return START_STICKY
   }
 
@@ -44,27 +44,27 @@ class AlarmSoundService : Service() {
 
   override fun onBind(intent: Intent?): IBinder? = null
 
-  private fun startAlarmIfNeeded() {
-    if (mediaPlayer != null) return
+//   private fun startAlarmIfNeeded() {
+//     if (mediaPlayer != null) return
 
-    val prefs = getSharedPreferences(AlarmSchedulerModule.PREFS_NAME, Context.MODE_PRIVATE)
-    val customUri = prefs.getString(AlarmSchedulerModule.KEY_SOUND_URI, null)
+//     val prefs = getSharedPreferences(AlarmSchedulerModule.PREFS_NAME, Context.MODE_PRIVATE)
+//     val customUri = prefs.getString(AlarmSchedulerModule.KEY_SOUND_URI, null)
 
-    val fallbackUri = Uri.parse("android.resource://$packageName/${R.raw.alarm_voice}")
-    val customParsedUri = customUri?.takeIf { it.isNotBlank() }?.let { Uri.parse(it) }
+//     val fallbackUri = Uri.parse("android.resource://$packageName/${R.raw.alarm_voice}")
+//     val customParsedUri = customUri?.takeIf { it.isNotBlank() }?.let { Uri.parse(it) }
 
-    if (customParsedUri != null) {
-      Log.d(logTag, "Trying custom alarm URI: $customParsedUri")
-      if (tryStartPlayer(customParsedUri)) return
-      Log.w(logTag, "Custom alarm URI failed, falling back to bundled alarm sound")
-    }
+//     if (customParsedUri != null) {
+//       Log.d(logTag, "Trying custom alarm URI: $customParsedUri")
+//       if (tryStartPlayer(customParsedUri)) return
+//       Log.w(logTag, "Custom alarm URI failed, falling back to bundled alarm sound")
+//     }
 
-    if (!tryStartPlayer(fallbackUri)) {
-      Log.e(logTag, "Failed to start alarm playback with both custom and fallback URI")
-      stopForeground(STOP_FOREGROUND_REMOVE)
-      stopSelf()
-    }
-  }
+//     if (!tryStartPlayer(fallbackUri)) {
+//       Log.e(logTag, "Failed to start alarm playback with both custom and fallback URI")
+//       stopForeground(STOP_FOREGROUND_REMOVE)
+//       stopSelf()
+//     }
+//   }
 
   private fun tryStartPlayer(soundUri: Uri): Boolean {
     return try {

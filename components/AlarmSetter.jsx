@@ -78,6 +78,8 @@ export default function AlarmSetter({ onAlarmChange, onClose }) {
 	const name = onboarding.name || 'friend';
 	const wakeReason = onboarding.goal || 'No goal provided';
 
+	console.log("Wake Reason: ", wakeReason);
+
 	// const name = 'Dilan';
 
 	const wakeTime = alarmDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
